@@ -1,0 +1,26 @@
+/* Put your custom CSS here */
+
+@media ( min-width: 40em ) {
+    /* Show the table header rows and set all cells to display: table-cell */ 
+    .my-custom-breakpoint td,
+    .my-custom-breakpoint th,
+    .my-custom-breakpoint tbody th,
+    .my-custom-breakpoint tbody td,
+    .my-custom-breakpoint thead td,
+    .my-custom-breakpoint thead th {
+        display: table-cell;
+        margin: 0;
+    }
+    /* Hide the labels in each cell */ 
+    .my-custom-breakpoint td .ui-table-cell-label,
+    .my-custom-breakpoint th .ui-table-cell-label { 
+        display: none;
+    }
+}
+table.display tr.even.row_selected td {
+    background-color:#B0BED9;!important
+}
+table.display tr.odd.row_selected td {
+    background-color:#9FAFD1;!important
+}
+
