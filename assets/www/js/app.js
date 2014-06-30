@@ -25,13 +25,13 @@
           $("#load").bind("click", viewTransactions);
           $("#export").bind("click", exportData);
           $("#import").bind("click", importData);
-          var default_color =  $('#import').css("background-color");
+          var default_color = $('#import').css("background-color");
           $('#import,#export').bind('touchstart', function () {
               $(this).css('background-color', 'red');
           });
 
           $('#import,#export').bind('touchend', function () {
-              $(this).css('background-color',default_color);
+              $(this).css('background-color', default_color);
           });
 
           $("#records").on('change', function () {
@@ -128,7 +128,7 @@
           viewTransactions();
           setTimeout(function () {
               navigator.splashscreen.hide();
-          }, 1700);
+          }, 2000);
       }
 
       function cal_total() {
@@ -412,16 +412,16 @@
                       }
                       loan[key1] += amount;
                       if (typeof (loan[key2]) != "undefined") {
-                          loan[key1] = loan[key2] - loan[key1];
-                          if (loan[key1] == 0) {
+                          loan[key2] = loan[key2] - loan[key1];
+                          if (loan[key2] == 0) {
                               delete loan[key1];
                               delete loan[key2];
                           }
-                          if (loan[key1] < 0) {
-                              loan[key1] = (loan[key1] * -1);
+                          if (loan[key2] < 0) {
+                              loan[key1] = (loan[key2] * -1);
                               delete loan[key2];
                           } else {
-                              delete loan[key2];
+                              delete loan[key1];
                           }
                       }
                   } else {
@@ -429,8 +429,11 @@
                           status[paidby] = 0;
                       }
                       status[paidby] += amount;
+                      if (!items[paidfor]) {
+                          items[paidfor] = 0;
+                      }
+                      items[paidfor] += amount;
                   }
-                  items[paidfor] = 1;
                   data = data + date + " " + paidby + " " + paidfor + " " + amount + "\n";
                   var addId = dtable.fnAddData([id, date, paidby, paidfor, amount]);
                   var theNode = dtable.fnSettings().aoData[addId[0]].nTr;
@@ -444,6 +447,7 @@
                   data = data + i + 'has spent to team ' + status[i] + 'INR\n';
                   $("#details").append('<li><b>' + i + '</b> has spent to team ' + status[i] + ' INR</li>');
               }
+
 
               for (var i in loan) {
                   var name = i.split('^');
@@ -503,6 +507,76 @@
 
               }]);
               cal_total();
+
+              var ir_data = [];
+              for (var i in items) {
+                  var amt = items[i];
+                  ir_data.push([amt, i]);
+              }
+
+              var cr_data = [];
+              for (var i in shareof) {
+                  var amt = shareof[i]
+                  cr_data.push([i + "\(" + amt + " INR\)", amt]);
+              }
+              $("#item-report").html("");
+              $("#user-report").html("");
+              var plot1 = $.jqplot('item-report', [
+                  //   [ [10,"oranges"], [20,"apples"], [30,"bananas"],[50,"Food"],[1000,"Movie"] ]
+                  ir_data
+              ], {
+                  title: "Item wise report",
+                  seriesDefaults: {
+                      renderer: $.jqplot.BarRenderer,
+                      pointLabels: {
+                          show: true,
+                          location: 'e',
+                          edgeTolerance: -15
+                      },
+                      shadowAngle: 135,
+                      rendererOptions: {
+                          barDirection: 'horizontal'
+                      }
+                  },
+                  axesDefaults: {
+                      tickRenderer: $.jqplot.CanvasAxisTickRenderer,
+                      tickOptions: {
+                          angle: -90,
+                          fontSize: '10pt'
+                      }
+                  },
+                  axes: {
+                      xaxis: {
+                          //   label:'Amount spent (INR)',
+                      },
+
+                      yaxis: {
+                          //label:'Items',
+                          tickOptions: {
+                              fontSize: '10pt',
+                              fontFamily: 'Tahoma',
+                              angle: 0
+                          },
+                          renderer: $.jqplot.CategoryAxisRenderer,
+                      },
+                  }
+              });
+
+
+              var plot2 = jQuery.jqplot('user-report', [cr_data], {
+                  title: "Contribution chart",
+                  seriesDefaults: {
+                      renderer: jQuery.jqplot.PieRenderer,
+                      rendererOptions: {
+                          sliceMargin: 4,
+                          showDataLabels: true
+                      }
+                  },
+                  legend: {
+                      show: true,
+                      location: 'e'
+                  }
+              });
           }
       }
 
@@ -552,4 +626,3 @@
           }
           $('#contribution').listview('refresh');
       }
-
