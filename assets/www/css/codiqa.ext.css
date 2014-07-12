@@ -24,3 +24,25 @@ table.display tr.odd.row_selected td {
     background-color:#9FAFD1;!important
 }
 
+.ui-tabs-content {
+    display: none;
+    margin-top: -15px;
+}
+
+.ui-tabs-content-active {
+    display: block;
+}
+
+.ui-btn-active {
+    color: white;
+    background-color : white;
+    background: #FF9900;
+}
+
+.tab-content{
+    border-bottom-left-radius:0.5em;
+    border-bottom-right-radius:0.5em;
+}
+.tab-content>div{
+/*   padding:5px;*/
+}     

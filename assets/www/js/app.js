@@ -11,12 +11,18 @@
       var csv_data;
       var db_data = {};
       var file = {};
+      var ir_data = []; //data for item-wise report 
+      var cr_data = []; // data for pie-chart report
+
 
       document.addEventListener("deviceready", onDeviceReady, false);
 
       function onDeviceReady() {
+          //create ExpenseDB version 1.0
           db = window.openDatabase("ExpenseDB", "1.0", "ExpenseDB", 200000);
           db.transaction(openTable, errorCB);
+
+          //get fileSystem for import/export
           window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, gotFS, fail);
 
           // events listeners
@@ -25,6 +31,8 @@
           $("#load").bind("click", viewTransactions);
           $("#export").bind("click", exportData);
           $("#import").bind("click", importData);
+
+          //current menu list background
           var default_color = $('#import').css("background-color");
           $('#import,#export').bind('touchstart', function () {
               $(this).css('background-color', 'red');
@@ -35,9 +43,11 @@
           });
 
           $("#records").on('change', function () {
+              //total amount for new contents in the dataTable
               cal_total();
           });
 
+          // date sort for 1st column
           jQuery.extend(jQuery.fn.dataTableExt.oSort, {
               "date-eu-pre": function (date) {
                   var eu_date = date.split('/');
@@ -87,9 +97,11 @@
               ]
           });
 
+          //dataTable Delete button
           $(".options").html('<button disabled="" id="btnDeleteRow">Delete</button>');
           $("#btnDeleteRow").bind("click", deleteData);
 
+          // dataTable row select handler
           $("#records tbody").click(function (event) {
               var oDeleteRowButton = $("#btnDeleteRow");
               if ($(event.target.parentNode).hasClass("row_selected")) {
@@ -115,8 +127,12 @@
           if (mm == 0) {
               mm = 12;
           }
-          var from_date = yyyy + '-' + mm + '-' + dd;
+          var from_date = yyyy + '-' + mm + '-' + (dd + 1);
+          //TEMPORARY SOLUTION
+          //dd + 1 to tell the first day to jQuery datepicker
+
           var date = new Date(from_date);
+          //set day 1 of current month
           document.getElementById("from").valueAsDate = date;
           if (mm == 12) {
               mm = 0;
@@ -124,21 +140,106 @@
           }
           var to_date = yyyy + '-' + (mm + 1) + '-' + dd;
           date = new Date(to_date);
+          //set last day of current month
           document.getElementById("to").valueAsDate = date;
           viewTransactions();
+          var prevSelection = "tab1";
+          //tab1 landing page
+          $(document).on("click", "#navbar ul li", function () {
+              var newSelection = $(this).children("a").attr("data-tab-class");
+              $("." + prevSelection).addClass("ui-screen-hidden");
+              $("." + newSelection).removeClass("ui-screen-hidden");
+              if (newSelection == "tab2") {
+                  //tab 2 bar graph
+                  $("#item-report").html("");
+                  showBarGraph();
+              }
+              if (newSelection == "tab3") {
+                  //tab 3 pie-chart
+                  $("#user-report").html("");
+                  showPieGraph();
+              }
+
+              prevSelection = newSelection;
+              //now prevSelection has curret active tab
+          });
           setTimeout(function () {
+              //hide splashscreen after 2 seconds, assuming page ready
               navigator.splashscreen.hide();
           }, 2000);
+
+          $("#paidby,#paidfor,#paidto").on("focus", function (event) {
+              $(this).autocomplete("search");
+          });
+          $("#paidby,#paidfor,#paidto").on("focusout", function (event) {
+              $(this).autocomplete("close");
+          });
+
+
+          //swipe event 
+          $(document).on("swipeleft", ".tab-content", function (event) {
+              //TEMPORARY SOLUTION
+              // jquerymobile swipe does not generate focusout event ,so hided here
+              $("#paidby,#paidfor,#paidto").autocomplete("close");
+
+              // to get active tab , not required right now
+              //var current_tab = $("#navbar ul").find(".ui-btn-active").attr("data-tab-class");
+              if (prevSelection == "tab1") {
+                  $("." + prevSelection).addClass("ui-screen-hidden");
+                  $(".tab2").removeClass("ui-screen-hidden");
+                  $("#tx_tab").removeClass("ui-btn-active");
+                  $("#report1_tab").addClass("ui-btn-active");
+                  prevSelection = "tab2";
+                  $("#item-report").html("");
+                  showBarGraph();
+              } else if (prevSelection == "tab2") {
+                  $("." + prevSelection).addClass("ui-screen-hidden");
+                  $(".tab3").removeClass("ui-screen-hidden");
+                  $("#report1_tab").removeClass("ui-btn-active");
+                  $("#report2_tab").addClass("ui-btn-active");
+                  prevSelection = "tab3";
+                  $("#user-report").html("");
+                  showPieGraph();
+              } else {
+                  //no more left
+              }
+          });
+
+          $(document).on("swiperight", ".tab-content", function (event) {
+              //TEMPORARY SOLUTION
+              // jquerymobile swipe does not generate focusout event ,so hided here
+              $("#paidby,#paidfor,#paidto").autocomplete("close");
+              if (prevSelection == "tab3") {
+                  $("." + prevSelection).addClass("ui-screen-hidden");
+                  $(".tab2").removeClass("ui-screen-hidden");
+                  $("#report2_tab").removeClass("ui-btn-active");
+                  $("#report1_tab").addClass("ui-btn-active");
+                  prevSelection = "tab2";
+                  $("#item-report").html("");
+                  showBarGraph();
+              } else if (prevSelection == "tab2") {
+                  $("." + prevSelection).addClass("ui-screen-hidden");
+                  $(".tab1").removeClass("ui-screen-hidden");
+                  $("#report1_tab").removeClass("ui-btn-active");
+                  $("#tx_tab").addClass("ui-btn-active");
+                  prevSelection = "tab1";
+              } else {
+                  //no more right
+              }
+          });
       }
 
       function cal_total() {
+          // calculate total for amount column
           var total = 0;
           $("#records tr td:nth-child(4)").each(function (index, element) {
               total += parseInt($(element).text());
           });
+          //append total to the dataTable
           $(".total").html('<span  style="font-size:0.80em;"><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Total : </strong>' + total.toFixed(2) + '</span>');
       }
 
+       // save new transaction
       function saveData() {
           errflag = 0;
           var date = new Date($("#date").val());
@@ -153,6 +254,9 @@
               toast.show("All fields are required !", 1);
               return;
           } else {
+              //make init cap for names and reason
+              paidfor = paidfor.toLowerCase();
+              paidfor = paidfor[0].toUpperCase() + paidfor.slice(1);
               paidby = paidby.toLowerCase();
               paidby = paidby[0].toUpperCase() + paidby.slice(1);
               paidto = paidto.toLowerCase();
@@ -164,6 +268,7 @@
                   if (shareof[paidto] >= 0) {
                       // alert("avail");
                   } else {
+                      // amount paid to new person , may be new member
                       navigator.notification.confirm(
                           'You are about to add new team member ?',
                           newMemberConfirm,
@@ -188,6 +293,7 @@
       }
 
       function insertNew(tx) {
+          //add new member with transaction for zero
           var date = new Date($("#date").val());
           date = date.getTime();
           var paidby = $("#paidto").val();
@@ -195,6 +301,7 @@
       }
 
       function deleteData() {
+          //delete row from dataTable 
           var id = $('table tr.row_selected').attr("id");
           if (id > 0) {
               query = "delete from Expense where id=" + id + ";";
@@ -210,6 +317,7 @@
       }
 
       function onMenuKeyDown() {
+          //show menu
           $("#impPopup").popup("close");
           $("#cPopup").popup("close");
           if ($(".ui-panel").hasClass("ui-panel-open") == true) {
@@ -226,6 +334,7 @@
       }
 
       function deleteConfirm(index) {
+          //delete after confirmation
           if (index == 1) {
               db.transaction(deleteRecord, errorCB);
           }
@@ -237,13 +346,12 @@
           toast.show("Record Deleted Successfully !", 1);
       }
 
-
        //create table Expense
       function openTable(tx) {
           tx.executeSql('CREATE TABLE IF NOT EXISTS Expense (id INTEGER PRIMARY KEY AUTOINCREMENT,Date Number NOT NULL, PaidBy TEXT NOT NULL, PaidFor TEXT NOT NULL,PaidTo TEXT NOT NULL DEFAULT "All",Amount Number NOT NULL)');
       }
 
-       //function will be called when an error occurred
+       //function will be called when DB error occurred
       function errorCB(err) {
           toast.show("Error in Data !", 1);
       }
@@ -253,7 +361,6 @@
           from_epoch = from.getTime();
           var to = new Date($("#to").val());
           to_epoch = to.getTime();
-
           query = 'SELECT * FROM Expense where Date between ' + from_epoch + ' and ' + to_epoch + ';';
           db.transaction(queryDB, errorCB);
       }
@@ -301,6 +408,7 @@
       function FileChanged() {
           var fobj = document.getElementById('file1').files[0];
           if (typeof fobj != "undefined") {
+              //extract extension from file name
               var ext = fobj.name.match(/\.[a-z]{3,3}$/gi);
               if (ext == null || ext[ext.length - 1].toLowerCase() != ".csv") {
                   toast.show("CSV File Required", 1);
@@ -348,6 +456,9 @@
                               var paidto = line[3];
                               paidto = paidto.toLowerCase();
                               paidto = paidto[0].toUpperCase() + paidto.slice(1);
+                              paidfor = paidfor.toLowerCase();
+                              paidfor = paidfor[0].toUpperCase() + paidfor.slice(1);
+
                               var amount = line[4];
                               amount = parseFloat(amount).toFixed(2);
 
@@ -393,6 +504,7 @@
           var items = new Array();
           $("#details").html("");
           if (len > 0) {
+              //populate data to dataTable
               for (var i = 0; i < len; i++) {
                   var date_epoch = result.rows.item(i).Date;
                   var d = new Date(date_epoch);
@@ -411,17 +523,19 @@
                           loan[key1] = 0;
                       }
                       loan[key1] += amount;
-                      if (typeof (loan[key2]) != "undefined") {
-                          loan[key2] = loan[key2] - loan[key1];
-                          if (loan[key2] == 0) {
-                              delete loan[key1];
-                              delete loan[key2];
-                          }
-                          if (loan[key2] < 0) {
-                              loan[key1] = (loan[key2] * -1);
-                              delete loan[key2];
-                          } else {
-                              delete loan[key1];
+                      if (key1 != key2) {
+                          if (typeof (loan[key2]) != "undefined") {
+                              loan[key2] = loan[key2] - loan[key1];
+                              if (loan[key2] == 0) {
+                                  delete loan[key1];
+                                  delete loan[key2];
+                              }
+                              if (loan[key2] < 0) {
+                                  loan[key1] = (loan[key2] * -1);
+                                  delete loan[key2];
+                              } else {
+                                  delete loan[key1];
+                              }
                           }
                       }
                   } else {
@@ -470,7 +584,7 @@
                   }
               }
               if (nop > 1) {
-                  $("#details").append('<li><center><input id="calc" type="button" value="Calculate common expense"></input><input id="savereport" type="button" value="Save report"></input></center></li>');
+                  $("#details").append('<li><center><input id="calc" type="button" value="Calculate teampay"></input><input id="savereport" type="button" value="Save report"></input></center></li>');
                   var calc_button = document.getElementById("calc");
                   calc_button.addEventListener("click", call_calc_popup);
               } else {
@@ -481,17 +595,17 @@
 
               $('#details').listview('refresh');
               $("#paidby").autocomplete({
-                  minLength: 1,
+                  minLength: 0,
                   source: Object.keys(status)
               });
 
               $("#paidto").autocomplete({
-                  minLength: 1,
+                  minLength: 0,
                   source: Object.keys(status)
               });
 
               $("#paidfor").autocomplete({
-                  minLength: 1,
+                  minLength: 0,
                   source: Object.keys(items)
               });
               dtable.fnDraw();
@@ -508,75 +622,18 @@
               }]);
               cal_total();
 
-              var ir_data = [];
+              ir_data = [];
+              cr_data = [];
+
               for (var i in items) {
                   var amt = items[i];
                   ir_data.push([amt, i]);
               }
 
-              var cr_data = [];
               for (var i in shareof) {
                   var amt = shareof[i]
                   cr_data.push([i + "\(" + amt + " INR\)", amt]);
               }
-              $("#item-report").html("");
-              $("#user-report").html("");
-              var plot1 = $.jqplot('item-report', [
-                  //   [ [10,"oranges"], [20,"apples"], [30,"bananas"],[50,"Food"],[1000,"Movie"] ]
-                  ir_data
-              ], {
-                  title: "Item wise report",
-                  seriesDefaults: {
-                      renderer: $.jqplot.BarRenderer,
-                      pointLabels: {
-                          show: true,
-                          location: 'e',
-                          edgeTolerance: -15
-                      },
-                      shadowAngle: 135,
-                      rendererOptions: {
-                          barDirection: 'horizontal'
-                      }
-                  },
-                  axesDefaults: {
-                      tickRenderer: $.jqplot.CanvasAxisTickRenderer,
-                      tickOptions: {
-                          angle: -90,
-                          fontSize: '10pt'
-                      }
-                  },
-                  axes: {
-                      xaxis: {
-                          //   label:'Amount spent (INR)',
-                      },
-
-                      yaxis: {
-                          //label:'Items',
-                          tickOptions: {
-                              fontSize: '10pt',
-                              fontFamily: 'Tahoma',
-                              angle: 0
-                          },
-                          renderer: $.jqplot.CategoryAxisRenderer,
-                      },
-                  }
-              });
-
-
-              var plot2 = jQuery.jqplot('user-report', [cr_data], {
-                  title: "Contribution chart",
-                  seriesDefaults: {
-                      renderer: jQuery.jqplot.PieRenderer,
-                      rendererOptions: {
-                          sliceMargin: 4,
-                          showDataLabels: true
-                      }
-                  },
-                  legend: {
-                      show: true,
-                      location: 'e'
-                  }
-              });
           }
       }
 
@@ -625,4 +682,65 @@
               }
           }
           $('#contribution').listview('refresh');
+      }
+
+      function showBarGraph() {
+
+          var plot1 = $.jqplot('item-report', [
+              ir_data
+          ], {
+              title: "Item wise report",
+              seriesDefaults: {
+                  renderer: $.jqplot.BarRenderer,
+                  pointLabels: {
+                      show: true,
+                      location: 'e',
+                      edgeTolerance: -15
+                  },
+                  shadowAngle: 135,
+                  rendererOptions: {
+                      barDirection: 'horizontal'
+                  }
+              },
+              axesDefaults: {
+                  tickRenderer: $.jqplot.CanvasAxisTickRenderer,
+                  tickOptions: {
+                      angle: -90,
+                      fontSize: '10pt'
+                  }
+              },
+              axes: {
+                  xaxis: {
+                      //   label:'Amount spent (INR)',
+                  },
+
+                  yaxis: {
+                      //label:'Items',
+                      tickOptions: {
+                          fontSize: '10pt',
+                          fontFamily: 'Tahoma',
+                          angle: 0
+                      },
+                      renderer: $.jqplot.CategoryAxisRenderer,
+                  },
+              }
+          });
+
+      }
+
+      function showPieGraph() {
+          var plot2 = jQuery.jqplot('user-report', [cr_data], {
+              title: "Contribution chart",
+              seriesDefaults: {
+                  renderer: jQuery.jqplot.PieRenderer,
+                  rendererOptions: {
+                      sliceMargin: 4,
+                      showDataLabels: true
+                  }
+              },
+              legend: {
+                  show: true,
+                  location: 'e'
+              }
+          });
       }
