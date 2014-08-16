@@ -61,6 +61,9 @@
                 </ul>
             </div>
         </div>
+        <div data-role="popup" id="del" data-transition="flip" data-theme="a" data-overlay-theme="a" >
+            <button id="btnDeleteRow">Delete</button>
+        </div>
         <div data-theme="a" data-overlay-theme="a" data-role="popup" id="impPopup" data-transaction="none" class="ui-content">
             <div data-role="fieldcontain">
                 <input type="FILE" id="file1" /><span id="filename">No File chosen</span>
@@ -144,7 +147,7 @@
                                     Date
                                     <div id="date_container"></div>
                                 </th>
-                                <th width="23%" data-priority="persist">
+                                <th width="24%" data-priority="persist">
                                     PaidBy
                                     <div id="paidby_container"></div>
                                 </th>
@@ -152,7 +155,7 @@
                                     PaidFor
                                     <div id="paidfor_container"></div>
                                 </th>
-                                <th width="21%" data-priority="4">Amount
+                                <th width="20%" data-priority="4">Amount
                                     <br>(INR)</br>
                                 </th>
                             </tr>

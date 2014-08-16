@@ -31,6 +31,7 @@
           $("#load").bind("click", viewTransactions);
           $("#export").bind("click", exportData);
           $("#import").bind("click", importData);
+          $("#btnDeleteRow").bind("click", deleteData);
 
           //current menu list background
           var default_color = $('#import').css("background-color");
@@ -86,6 +87,7 @@
               },
               "bAutoWidth": false,
               "sDom": 'lf<"options">ti<"total">p',
+                 'iDisplayLength': 100,
               "aoColumns": [
                   null, {
                       sType: "date-eu"
@@ -98,8 +100,8 @@
           });
 
           //dataTable Delete button
-          $(".options").html('<button disabled="" id="btnDeleteRow">Delete</button>');
-          $("#btnDeleteRow").bind("click", deleteData);
+//          $(".options").html('<button disabled="" id="btnDeleteRow">Delete</button>');
+  //        $("#btnDeleteRow").bind("click", deleteData);
 
           // dataTable row select handler
           $("#records tbody").click(function (event) {
@@ -107,12 +109,14 @@
               if ($(event.target.parentNode).hasClass("row_selected")) {
                   $(event.target.parentNode).removeClass("row_selected");
                   oDeleteRowButton.attr("disabled", "true");
+                  $("#del").popup("close");
               } else {
                   $(dtable.fnSettings().aoData).each(function () {
                       $(this.nTr).removeClass("row_selected");
                   });
                   $(event.target.parentNode).addClass("row_selected");
                   oDeleteRowButton.removeAttr("disabled");
+                  $("#del").popup("open");
               }
 
           });
@@ -127,7 +131,7 @@
           if (mm == 0) {
               mm = 12;
           }
-          var from_date = yyyy + '-' + mm + '-' + (dd + 1);
+          var from_date = yyyy + '-' + mm + '-' + dd;
           //TEMPORARY SOLUTION
           //dd + 1 to tell the first day to jQuery datepicker
 
@@ -225,6 +229,7 @@
                   prevSelection = "tab1";
               } else {
                   //no more right
+                  $("#menupanel").panel("open");
               }
           });
       }
@@ -302,6 +307,7 @@
 
       function deleteData() {
           //delete row from dataTable 
+          $("#del").popup("close");
           var id = $('table tr.row_selected').attr("id");
           if (id > 0) {
               query = "delete from Expense where id=" + id + ";";
@@ -549,7 +555,7 @@
                       items[paidfor] += amount;
                   }
                   data = data + date + " " + paidby + " " + paidfor + " " + amount + "\n";
-                  var addId = dtable.fnAddData([id, date, paidby, paidfor, amount]);
+                  var addId = dtable.fnAddData([id, date, paidby+" --> "+paidto, paidfor, amount]);
                   var theNode = dtable.fnSettings().aoData[addId[0]].nTr;
                   theNode.setAttribute('id', id);
               }
