@@ -124,27 +124,19 @@
 
           var today = new Date();
           document.getElementById("date").valueAsDate = today;
-          var dd = 1; //start from day 1 of the month
-          var mm = today.getMonth(); //January is 0!
-          var yyyy = today.getFullYear();
-          mm = (mm + 1) % 12;
-          if (mm == 0) {
-              mm = 12;
-          }
-          var from_date = yyyy + '-' + mm + '-' + dd;
-          //TEMPORARY SOLUTION
-          //dd + 1 to tell the first day to jQuery datepicker
 
-          var date = new Date(from_date);
-          //set day 1 of current month
+          var mm = today.getMonth();
+          var yyyy = today.getFullYear();
+         //TEMPORARY SOLUTION 02 is set because jquerymobile datepicker picks one day b4 date
+          var date = new Date(yyyy,mm,02);
           document.getElementById("from").valueAsDate = date;
-          if (mm == 12) {
-              mm = 0;
-              yyyy = yyyy + 1;
-          }
-          var to_date = yyyy + '-' + (mm + 1) + '-' + dd;
-          date = new Date(to_date);
-          //set last day of current month
+          mm = mm + 1;
+          if  ( mm == 12 ) {
+                mm = 0;
+                yyyy = yyyy + 1;
+          } 
+          date = new Date(yyyy,mm,01);
+          //set day 1 of next month
           document.getElementById("to").valueAsDate = date;
           viewTransactions();
           var prevSelection = "tab1";
