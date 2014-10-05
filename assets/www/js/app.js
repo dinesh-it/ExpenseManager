@@ -495,7 +495,7 @@
       function querySuccess(tx, result) {
           var len = result.rows.length;
           dtable.fnClearTable();
-          data = "Date     PaidBy      PaidFor        Amount \n";
+          data = "Date\t\t\t\t\tPaidBy\t\t\tPaidFor\t\t\tPaidTo\t\t\tAmount \n";
           var status = new Array();
           shareof = [];
           var loan = new Object;
@@ -546,7 +546,7 @@
                       }
                       items[paidfor] += amount;
                   }
-                  data = data + date + " " + paidby + " " + paidfor + " " + amount + "\n";
+                  data = data + date + "\t\t" + paidby + "\t\t\t" + paidfor + "\t\t\t\t" + paidto + "\t\t\t\t\t\t" + amount + "\n";
                   var addId = dtable.fnAddData([id, date, paidby+" --> "+paidto, paidfor, amount]);
                   var theNode = dtable.fnSettings().aoData[addId[0]].nTr;
                   theNode.setAttribute('id', id);
@@ -556,7 +556,7 @@
               for (var i in status) {
                   amt = amt + status[i];
                   shareof[i] = status[i];
-                  data = data + i + 'has spent to team ' + status[i] + 'INR\n';
+                  data = data + i + ' has spent to team ' + status[i] + ' INR\n';
                   $("#details").append('<li><b>' + i + '</b> has spent to team ' + status[i] + ' INR</li>');
               }
 
@@ -637,7 +637,12 @@
 
 
       function saveReport() {
-          file.fs.root.getFile("Report.txt", {
+           var from = new Date($("#from").val());
+           var to = new Date($("#to").val());
+           var from_date = from.getDate() +"_"+ (from.getMonth() + 1) +"_"+from.getFullYear();
+           var to_date = to.getDate() +"_"+ (to.getMonth() + 1)+"_"+to.getFullYear();
+           var file_name = "Report"+from_date+"_to_"+to_date+".txt";
+          file.fs.root.getFile(file_name, {
               create: true,
               exclusive: false
           }, gotFileEntry, fail);
