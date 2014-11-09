@@ -709,7 +709,7 @@
               "PaidTo": "All"
           });
           team_members = _.uniq(_.pluck(paid_to_team, "PaidBy"));
-          all_members = _.without(_.union(team_members, _.uniq(_.pluck(_data, "PaidTo"))), "All");
+          all_members  = _.without(_.union(team_members,_.pluck(_data, "PaidTo"),_.pluck(_data, "PaidBy")), "All");
           all_paid_for = _.uniq(_.pluck(_data, "PaidFor"));
           team_size = _.size(team_members);
 
