@@ -1,2 +1,9 @@
 test file
+line in middle
 Added a line again
+Added one more line
+Added anotheer line
+Added another line
+second line
+third line
+one more line
